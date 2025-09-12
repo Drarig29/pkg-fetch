@@ -176,7 +176,7 @@ export async function fetchExtractApply(
 ) {
   await tarFetch(nodeVersion);
   await tarExtract(nodeVersion, quietExtraction);
-  await applyPatches(nodeVersion);
+  // await applyPatches(nodeVersion);
 }
 
 async function compileOnWindows(
