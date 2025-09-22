@@ -58,7 +58,7 @@ Node.js binaries built by this project **use the `--with-intl=none` option** to 
 
 Size comparison:
 
-- Node.js 22 (macOS arm64) with `--with-intl=none` is 17.8 MB
+- Node.js 22 (macOS arm64) with `--with-intl=none` is 51.4 MB
 - Node.js 22 (macOS arm64) with `--with-intl=small-icu` is 57.7 MB
 - Node.js 22 (macOS arm64) with `--with-intl=full-icu` is 110 MB
 
