@@ -17,7 +17,6 @@ import { localPlace, remotePlace, Remote } from './places';
 import { log, wasReported } from './log';
 import build from './build';
 import { downloadUrl, hash, plusx } from './utils';
-import patchesJson from '../patches/patches.json';
 import { version } from '../package.json';
 
 async function download(
@@ -56,7 +55,7 @@ interface NeedOptions {
 }
 
 export function satisfyingNodeVersion(nodeRange: string) {
-  const versions = Object.keys(patchesJson)
+  const versions = ['v22.19.0'] // Object.keys(patchesJson)
     .filter((nv) => semver.satisfies(nv, nodeRange) || nodeRange === 'latest')
     .sort((nv1, nv2) => (semver.gt(nv1, nv2) ? 1 : -1));
 

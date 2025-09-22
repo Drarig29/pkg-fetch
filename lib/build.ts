@@ -12,14 +12,12 @@ import { cachePath } from './places';
 import { downloadUrl, hash, spawn } from './utils';
 import { hostArch, hostPlatform } from './system';
 import { log, wasReported } from './log';
-import patchesJson from '../patches/patches.json';
 
 const buildPath = path.resolve(
   process.env.PKG_BUILD_PATH ||
     path.join(os.tmpdir(), `pkg.${crypto.randomBytes(12).toString('hex')}`)
 );
 const nodePath = path.join(buildPath, 'node');
-const patchesPath = path.resolve(__dirname, '../patches');
 
 const nodeRepo = 'https://nodejs.org/dist';
 const nodeArchivePath = path.join(cachePath, 'node');
@@ -149,34 +147,12 @@ async function tarExtract(nodeVersion: string, suppressTarOutput: boolean) {
   await pipe(source, gunzip, extract);
 }
 
-async function applyPatches(nodeVersion: string) {
-  log.info('Applying patches');
-
-  const storedPatches = patchesJson[nodeVersion as keyof typeof patchesJson] as
-    | string[]
-    | { patches: string[] }
-    | { sameAs: string };
-  const storedPatch =
-    'patches' in storedPatches ? storedPatches.patches : storedPatches;
-  const patches =
-    'sameAs' in storedPatch
-      ? patchesJson[storedPatch.sameAs as keyof typeof patchesJson]
-      : storedPatch;
-
-  for (const patch of patches) {
-    const patchPath = path.join(patchesPath, patch);
-    const args = ['-p1', '-i', patchPath];
-    await spawn('patch', args, { cwd: nodePath, stdio: 'inherit' });
-  }
-}
-
-export async function fetchExtractApply(
+export async function fetchExtract(
   nodeVersion: string,
   quietExtraction: boolean
 ) {
   await tarFetch(nodeVersion);
   await tarExtract(nodeVersion, quietExtraction);
-  // await applyPatches(nodeVersion);
 }
 
 async function compileOnWindows(
@@ -329,7 +305,7 @@ export default async function build(
   local: string
 ) {
   await prepBuildPath();
-  await fetchExtractApply(nodeVersion, false);
+  await fetchExtract(nodeVersion, false);
 
   const output = await compile(nodeVersion, targetArch, targetPlatform);
   const outputHash = await hash(output);
