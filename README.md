@@ -2,25 +2,19 @@ A utility to fetch or build patched Node binaries used by [pkg](https://github.c
 
 ## Binary Compatibility
 
-| Node                                                                                                                              | Platform    | Architectures             | Minimum OS version                                                                  |
-| --------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------- | ----------------------------------------------------------------------------------- |
-| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22 | alpine      | x64, arm64                | 3.7.3, other distros with musl libc >= 1.1.18                                       |
-| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>             | linux       | x64                       | Enterprise Linux 7, Ubuntu 14.04, Debian jessie, other distros with glibc >= 2.17   |
-| 18, 20, 22                                                                                                                        | linux       | x64                       | Enterprise Linux 8, Ubuntu 20.04, Debian buster, other distros with glibc >= 2.28   |
-| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>             | linux       | arm64                     | Enterprise Linux 8, Ubuntu 18.04, Debian buster, other distros with glibc >= 2.27   |
-| 18, 20, 22                                                                                                                        | linux       | arm64                     | Enterprise Linux 9, Ubuntu 20.04, Debian bullseye, other distros with glibc >= 2.31 |
-| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22 | linuxstatic | x64, arm64                | Any distro with Linux Kernel >= 2.6.32 (>= 3.10 strongly recommended)               |
-| 16<sup>[1](#fn1)</sup>, 18, 20, 22                                                                                                | linuxstatic | armv7<sup>[2](#fn2)</sup> | Any distro with Linux Kernel >= 2.6.32 (>= 3.10 strongly recommended)               |
-| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22 | macos       | x64                       | 10.13                                                                               |
-| 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22                                                                        | macos       | arm64<sup>[3](#fn3)</sup> | 11.0                                                                                |
-| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22 | win         | x64                       | 8.1                                                                                 |
-| 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22                                                                        | win         | arm64                     | 10                                                                                  |
+| Node                                                                                                                              | Platform | Architectures             | Minimum OS version                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>             | linux    | x64                       | Enterprise Linux 7, Ubuntu 14.04, Debian jessie, other distros with glibc >= 2.17   |
+| 18, 20, 22                                                                                                                        | linux    | x64                       | Enterprise Linux 8, Ubuntu 20.04, Debian buster, other distros with glibc >= 2.28   |
+| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>             | linux    | arm64                     | Enterprise Linux 8, Ubuntu 18.04, Debian buster, other distros with glibc >= 2.27   |
+| 18, 20, 22                                                                                                                        | linux    | arm64                     | Enterprise Linux 9, Ubuntu 20.04, Debian bullseye, other distros with glibc >= 2.31 |
+| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22 | macos    | x64                       | 10.13                                                                               |
+| 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22                                                                        | macos    | arm64<sup>[2](#fn2)</sup> | 11.0                                                                                |
+| 8<sup>[1](#fn1)</sup>, 10<sup>[1](#fn1)</sup>, 12<sup>[1](#fn1)</sup>, 14<sup>[1](#fn1)</sup>, 16<sup>[1](#fn1)</sup>, 18, 20, 22 | win      | x64                       | 8.1                                                                                 |
 
 <em id="fn1">[1]</em>: end-of-life, may be removed in the next major release.
 
-<em id="fn2">[2]</em>: best-effort basis, not semver-protected.
-
-<em id="fn3">[3]</em>: [mandatory code signing](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-universal-apps-release-notes) is enforced by Apple.
+<em id="fn2">[2]</em>: [mandatory code signing](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-universal-apps-release-notes) is enforced by Apple.
 
 ## Security
 
@@ -44,65 +38,6 @@ This project deploys multiple defense measures to ensure that the safe binaries 
 - GPG-signed hashes are available in [Releases](https://github.com/yao-pkg/pkg-fetch/releases)
   - Easy to spot a compromise.
 - `pkg-fetch` package on npm is strictly permission-controlled
-  - Only @robertsLando can push new revisions to npm.
-
-## Contributing Updates to Patches
-
-### Example workflow for applying patches to a new version of Node.js (18.13.0)
-
-1. Clone Node.js as a sibling to your current `pkg-fetch` clone
-
-   - `git clone -b v18.13.0 --single-branch https://github.com/nodejs/node.git`
-   - `cd node`
-
-2. Attempt to apply the closest patch (e.g. applying the existing patch for
-   18.12.1 when trying to generate a new patch for 18.13.0)
-
-- `git apply ..\pkg-fetch\patches\node.v18.12.1.cpp.patch --reject`
-
-4. If no rejects, great! you are ready to make your new patch file.
-
-- `git add -A`
-- `git diff --staged --src-prefix=node/ --dst-prefix=node/ > ..\pkg-fetch\patches\node.v18.13.0.cpp.patch`
-
-5. If rejects exist, resolve them yourself, and ensure all changes are saved,
-   and repeat step 4 to export the patch file
-
-#### Resolving Rejects
-
-Usually when a patch is rejected, it's because the context around the changes
-was refactored slightly since the last patched version. This is not usually
-complicated to resolve, but requires a human to interpret the changes since the
-last version `pkg` was patched against, compared with the version you wish to
-create a patch for.
-
-One method is to pull up the diff for the file where the rejects apply for the
-changes between the last tag (e.g. v18.12.1 to use the previous example) and the
-tag you want a patch for (e.g. v18.13.0 to use the previous example). Alongside
-this, have the `.rej` file and go through each rejected hunk by hunk and use
-your best judgement to determine how it should apply against the new tag.
-
-Save you results, and export the overall git diff with the commands from the
-example above.
-
-### Checking that patches apply cleanly
-
-The expectation is that a patch applies cleanly, with no delta or offsets from
-the source repo.
-
-When making a change to a patch file, it is possible to apply that patch without
-building by running
-
-`yarn applyPatches --node-range node18`
-
-where the `--node-range` can be specified to apply patches for the version of
-node for which you are updating patches. If unspecified, the latest node version
-in [patches.json](./patches/patches.json) will be used.
-
-Ultimately, the patch should result in fully functional node binary, but the
-`applyPatches` script can be used to quickly iterate just the application of
-the patches you are updating without needing to wait for the full build to
-complete.
 
 ## Building a Binary Locally
 
@@ -116,7 +51,22 @@ For example:
 
 ## Small ICU
 
-Node.js binaries built by this project use the `small-icu` option to reduce the size of the binary. If you need a Node.js binary with full ICU support, you can build it yourself by setting the `--with-intl=full-icu` option. Small ICU is sufficient for most use cases, and it reduces the binary size by about 30 MB.
+Node.js binaries built by this project **use the `--with-intl=none` option** to drastically reduce the size of the binary.
+
+- If you need a Node.js binary with small ICU support, you can build it yourself by setting the `--with-intl=small-icu` option. Small ICU is sufficient for most use cases.
+- If you need a Node.js binary with full ICU support, you can build it yourself by setting the `--with-intl=full-icu` option.
+
+Size comparison:
+
+- Node.js 22 (macOS arm64) with `--with-intl=none` is 17.8 MB
+- Node.js 22 (macOS arm64) with `--with-intl=small-icu` is 57.7 MB
+- Node.js 22 (macOS arm64) with `--with-intl=full-icu` is 110 MB
+
+Using `--with-intl=none` only has the following breaking changes:
+
+- The `Intl` object **is not available**, so accessing it will throw a `ReferenceError`. To fix it, you can provide shims or install [Intl.js](https://github.com/andyearnshaw/Intl.js) as a polyfill.
+
+See [this table in the Node.js documentation](https://nodejs.org/api/intl.html#options-for-building-nodejs) to see all the differences.
 
 ## Environment
 
