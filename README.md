@@ -1,4 +1,21 @@
-A utility to fetch or build patched Node binaries used by [pkg](https://github.com/yao-pkg/pkg) to generate executables. This repo hosts prebuilt binaries in [Releases](https://github.com/yao-pkg/pkg-fetch/releases).
+## This project is a fork used by `DataDog/datadog-ci` (see [#1858](https://github.com/DataDog/datadog-ci/pull/1858))
+
+This fork has the following differences:
+
+- It only builds Node.js binaries **required by `DataDog/datadog-ci`** (see [commit](https://github.com/Drarig29/pkg-fetch/commit/f773148f7e1d7c79fbec1ce5683368ce10016278)):
+  - Linux x64
+  - Linux arm64
+  - Windows x64
+  - macOS x64
+  - macOS arm64
+- It uses the `--with-intl=none` option to have a minimal size (see [No ICU support](#no-icu-support))
+- It **does not** apply any patches to the Node.js binaries, so it **must be used with `@yao-pkg/pkg`'s `--sea` option**.
+
+To avoid having to publish this fork on NPM (and also need to fork & publish `@yao-pkg/pkg`), this fork is only here to prebuild and hold the binaries for `DataDog/datadog-ci`.
+
+We have Yarn patches in the `DataDog/datadog-ci` repository to adjust `@yao-pkg/pkg`'s behavior and change the expected checksums and download location in `@yao-pkg/pkg-fetch`.
+
+The binaries are attached to [this release](https://github.com/Drarig29/pkg-fetch/releases/latest).
 
 ## Binary Compatibility
 
@@ -49,7 +66,7 @@ For example:
 
 `yarn start --node-range node18 --arch x64 --output dist`
 
-## Small ICU
+## No ICU support
 
 Node.js binaries built by this project **use the `--with-intl=none` option** to drastically reduce the size of the binary.
 
