@@ -8,7 +8,7 @@ This fork has the following differences:
   - Windows x64
   - macOS x64
   - macOS arm64
-- It uses the `--with-intl=none` option to have a minimal size (see [No ICU support](#no-icu-support))
+- It uses the `--with-intl=none`/`--without-intl` option to have a minimal size (see [No ICU support](#no-icu-support))
 - It **does not** apply any patches to the Node.js binaries, so it **must be used with `@yao-pkg/pkg`'s `--sea` option**.
 
 To avoid having to publish this fork on NPM (and also need to fork & publish `@yao-pkg/pkg`), this fork is only here to prebuild and hold the binaries for `DataDog/datadog-ci`.
