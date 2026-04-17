@@ -56,7 +56,7 @@ interface NeedOptions {
 }
 
 export function satisfyingNodeVersion(nodeRange: string) {
-  const versions = Object.keys(patchesJson)
+  const versions = ['v22.22.2', 'v25.9.0'] // Object.keys(patchesJson)
     .filter((nv) => semver.satisfies(nv, nodeRange) || nodeRange === 'latest')
     .sort((nv1, nv2) => (semver.gt(nv1, nv2) ? 1 : -1));
 
@@ -173,7 +173,10 @@ export async function need(opts: NeedOptions) {
   }
 
   if (hostPlatform !== platform) {
-    if ((hostPlatform !== 'alpine' || platform !== 'linuxstatic') && arch !== 'ppc64') {
+    if (
+      (hostPlatform !== 'alpine' || platform !== 'linuxstatic') &&
+      arch !== 'ppc64'
+    ) {
       throw wasReported(
         `Not able to build for '${opts.platform}' here, only for '${hostPlatform}'`
       );

@@ -68,10 +68,8 @@ function getConfigureArgs(major: number, targetPlatform: string, targetArch: str
   // bundled npm package manager
   args.push('--without-npm');
 
-  // Small ICU
-  if (hostPlatform !== 'win' || major < 24) {
-    args.push('--with-intl=small-icu');
-  }
+  // No ICU
+  args.push('--with-intl=none');
 
   // Workaround for nodejs/node#39313
   // All supported macOS versions have zlib as a system library
@@ -185,7 +183,7 @@ export async function fetchExtractApply(
 ) {
   await tarFetch(nodeVersion);
   await tarExtract(nodeVersion, quietExtraction);
-  await applyPatches(nodeVersion);
+  // await applyPatches(nodeVersion);
 }
 
 async function compileOnWindows(
@@ -211,13 +209,6 @@ async function compileOnWindows(
   // Link Time Code Generation
   if (major >= 12) {
     args.push('ltcg');
-  }
-
-  // Node24 builds on Windows crash with small-icu at icudat codegen
-  // workaround for now is to enable full-icu
-  // TODO check with newer node/tooling/gh-image versions
-  if (major >= 24) {
-    args.push('full-icu');
   }
 
   await spawn('cmd', args, {

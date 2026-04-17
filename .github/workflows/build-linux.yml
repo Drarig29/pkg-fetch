@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-node: [20, 22, 24]
+        target-node: [22, 25]
         arch:
           - name: x64
             os: ubuntu-22.04
@@ -49,4 +49,3 @@ jobs:
         with:
           name: node${{ matrix.target-node }}-linux-${{ matrix.arch.name }}
           path: dist/*
-  
