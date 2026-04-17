@@ -56,7 +56,7 @@ interface NeedOptions {
 }
 
 export function satisfyingNodeVersion(nodeRange: string) {
-  const versions = Object.keys(patchesJson)
+  const versions = ['v22.22.2'] // Object.keys(patchesJson)
     .filter((nv) => semver.satisfies(nv, nodeRange) || nodeRange === 'latest')
     .sort((nv1, nv2) => (semver.gt(nv1, nv2) ? 1 : -1));
 
