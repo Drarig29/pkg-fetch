@@ -1,3 +1,79 @@
+diff --git node/common.gypi node/common.gypi
+--- node/common.gypi
++++ node/common.gypi
+@@ -192,7 +192,7 @@
+             ['clang==1', {
+               'lto': ' -flto ', # Clang
+             }, {
+-              'lto': ' -flto=4 -fuse-linker-plugin -ffat-lto-objects ', # GCC
++              'lto': ' -fno-lto ', # GCC
+             }],
+           ],
+         },
+diff --git node/deps/v8/src/builtins/builtins-typed-array.cc node/deps/v8/src/builtins/builtins-typed-array.cc
+--- node/deps/v8/src/builtins/builtins-typed-array.cc
++++ node/deps/v8/src/builtins/builtins-typed-array.cc
+@@ -505,16 +505,20 @@ simdutf::result ArrayBufferSetFromBase64(
+   DirectHandle<JSTypedArray> typed_array, size_t& output_length) {
+   output_length = array_length;
+   simdutf::result simd_result;
+-  if (typed_array->buffer()->is_shared()) {
+-    simd_result = simdutf::atomic_base64_to_binary_safe(
+-        reinterpret_cast<const T>(input_vector), input_length,
+-        reinterpret_cast<char*>(typed_array->DataPtr()), output_length,
+-        alphabet, last_chunk_handling, /*decode_up_to_bad_char*/ true);
+-  } else {
+-    simd_result = simdutf::base64_to_binary_safe(
+-        reinterpret_cast<const T>(input_vector), input_length,
+-        reinterpret_cast<char*>(typed_array->DataPtr()), output_length,
+-        alphabet, last_chunk_handling, /*decode_up_to_bad_char*/ true);
+-  }
++#if SIMDUTF_ATOMIC_REF
++  if (typed_array->buffer()->is_shared()) {
++    simd_result = simdutf::atomic_base64_to_binary_safe(
++        reinterpret_cast<const T>(input_vector), input_length,
++        reinterpret_cast<char*>(typed_array->DataPtr()), output_length,
++        alphabet, last_chunk_handling, /*decode_up_to_bad_char*/ true);
++  } else {
++#endif
++    simd_result = simdutf::base64_to_binary_safe(
++        reinterpret_cast<const T>(input_vector), input_length,
++        reinterpret_cast<char*>(typed_array->DataPtr()), output_length,
++        alphabet, last_chunk_handling, /*decode_up_to_bad_char*/ true);
++#if SIMDUTF_ATOMIC_REF
++  }
++#endif
+
+   return simd_result;
+ }
+@@ -833,14 +837,18 @@ BUILTIN(Uint8ArrayToBase64) {
+     // 11. Return CodePointsToString(outAscii).
+
+     size_t simd_result_size;
+-    if (uint8array->buffer()->is_shared()) {
+-      simd_result_size = simdutf::atomic_binary_to_base64(
+-          std::bit_cast<const char*>(uint8array->DataPtr()), length,
+-          reinterpret_cast<char*>(output->GetChars(no_gc)), alphabet);
+-    } else {
+-      simd_result_size = simdutf::binary_to_base64(
+-          std::bit_cast<const char*>(uint8array->DataPtr()), length,
+-          reinterpret_cast<char*>(output->GetChars(no_gc)), alphabet);
+-    }
++#if SIMDUTF_ATOMIC_REF
++    if (uint8array->buffer()->is_shared()) {
++      simd_result_size = simdutf::atomic_binary_to_base64(
++          std::bit_cast<const char*>(uint8array->DataPtr()), length,
++          reinterpret_cast<char*>(output->GetChars(no_gc)), alphabet);
++    } else {
++#endif
++      simd_result_size = simdutf::binary_to_base64(
++          std::bit_cast<const char*>(uint8array->DataPtr()), length,
++          reinterpret_cast<char*>(output->GetChars(no_gc)), alphabet);
++#if SIMDUTF_ATOMIC_REF
++    }
++#endif
+     DCHECK_EQ(simd_result_size, output_length);
+     USE(simd_result_size);
 diff --git node/deps/v8/include/v8-context.h node/deps/v8/include/v8-context.h
 --- node/deps/v8/include/v8-context.h
 +++ node/deps/v8/include/v8-context.h
