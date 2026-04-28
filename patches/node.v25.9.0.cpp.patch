@@ -1,0 +1,43 @@
+diff --git node/deps/v8/include/v8-context.h node/deps/v8/include/v8-context.h
+--- node/deps/v8/include/v8-context.h
++++ node/deps/v8/include/v8-context.h
+@@ -478,7 +478,7 @@ void* Context::GetAlignedPointerFromEmbedderData(Isolate* isolate, int index) {
+                      (I::kEmbedderDataSlotSize * index) +
+                      I::kEmbedderDataSlotExternalPointerOffset;
+   return reinterpret_cast<void*>(
+-      I::ReadExternalPointerField<{internal::kFirstEmbedderDataTag,
++      I::ReadExternalPointerField<internal::ExternalPointerTagRange{internal::kFirstEmbedderDataTag,
+                                    internal::kLastEmbedderDataTag}>(
+           isolate, embedder_data, value_offset));
+ #else
+@@ -498,7 +498,7 @@ void* Context::GetAlignedPointerFromEmbedderData(int index) {
+                      (I::kEmbedderDataSlotSize * index) +
+                      I::kEmbedderDataSlotExternalPointerOffset;
+   Isolate* isolate = I::GetCurrentIsolateForSandbox();
+   return reinterpret_cast<void*>(
+-      I::ReadExternalPointerField<{internal::kFirstEmbedderDataTag,
++      I::ReadExternalPointerField<internal::ExternalPointerTagRange{internal::kFirstEmbedderDataTag,
+                                    internal::kLastEmbedderDataTag}>(
+           isolate, embedder_data, value_offset));
+ #else
+diff --git node/deps/v8/include/v8-object.h node/deps/v8/include/v8-object.h
+--- node/deps/v8/include/v8-object.h
++++ node/deps/v8/include/v8-object.h
+@@ -954,7 +954,7 @@ void* Object::GetAlignedPointerFromInternalField(v8::Isolate* isolate,
+                  (I::kEmbedderDataSlotSize * index) +
+                  I::kEmbedderDataSlotExternalPointerOffset;
+     A value =
+-        I::ReadExternalPointerField<{internal::kFirstEmbedderDataTag,
++        I::ReadExternalPointerField<internal::ExternalPointerTagRange{internal::kFirstEmbedderDataTag,
+                                      internal::kLastEmbedderDataTag}>(
+             isolate, obj, offset);
+     return reinterpret_cast<void*>(value);
+@@ -977,7 +977,7 @@ void* Object::GetAlignedPointerFromInternalField(int index) {
+                  I::kEmbedderDataSlotExternalPointerOffset;
+     Isolate* isolate = I::GetCurrentIsolateForSandbox();
+     A value =
+-        I::ReadExternalPointerField<{internal::kFirstEmbedderDataTag,
++        I::ReadExternalPointerField<internal::ExternalPointerTagRange{internal::kFirstEmbedderDataTag,
+                                      internal::kLastEmbedderDataTag}>(
+             isolate, obj, offset);
+     return reinterpret_cast<void*>(value);
