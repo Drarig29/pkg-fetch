@@ -262,6 +262,13 @@ async function compileOnUnix(
     process.env.LDFLAGS = `${LDFLAGS} -arch x86_64`;
   }
 
+  // Node.js 25+ dynamically links libatomic.so.1 (via V8), which is absent on
+  // Debian/Ubuntu by default (nodejs/node#60790). Statically link it instead.
+  if (targetPlatform === 'linux' && getMajor(nodeVersion) >= 25) {
+    const { LDFLAGS = '' } = process.env;
+    process.env.LDFLAGS = `${LDFLAGS} -Wl,-Bstatic,-latomic,-Bdynamic`;
+  }
+
   if (hostArch !== targetArch) {
     log.warn('Cross compiling!');
     log.warn('You are responsible for appropriate env like CC, CC_host, etc.');
