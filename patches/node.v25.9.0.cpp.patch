@@ -6,7 +6,7 @@ diff --git node/common.gypi node/common.gypi
                'lto': ' -flto ', # Clang
              }, {
 -              'lto': ' -flto=4 -fuse-linker-plugin -ffat-lto-objects ', # GCC
-+              'lto': ' -fno-lto ', # GCC
++              'lto': ' -flto=4 -ffat-lto-objects ', # GCC
              }],
            ],
          },
