@@ -58,7 +58,7 @@ jobs:
           path: dist/*
 
   macos-arm64:
-    runs-on: macos-14 # macos-14 is arm64: https://github.com/actions/runner-images#available-images
+    runs-on: macos-15 # macos-15 is arm64 by default and ships Xcode 16.4 with std::atomic_ref
 
     strategy:
       fail-fast: false
