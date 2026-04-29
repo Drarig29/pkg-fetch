@@ -10,6 +10,15 @@ diff --git node/common.gypi node/common.gypi
              }],
            ],
          },
+@@ -639,7 +639,7 @@
+           'GCC_ENABLE_PASCAL_STRINGS': 'NO',        # No -mpascal-strings
+           'GCC_STRICT_ALIASING': 'NO',              # -fno-strict-aliasing
+           'PREBINDING': 'NO',                       # No -Wl,-prebind
+-          'MACOSX_DEPLOYMENT_TARGET': '13.5',       # -mmacosx-version-min=13.5
++          'MACOSX_DEPLOYMENT_TARGET': '14.0',       # -mmacosx-version-min=14.0
+           'USE_HEADERMAP': 'NO',
+           'WARNING_CFLAGS': [
+             '-Wall',
 diff --git node/deps/v8/src/builtins/builtins-typed-array.cc node/deps/v8/src/builtins/builtins-typed-array.cc
 --- node/deps/v8/src/builtins/builtins-typed-array.cc
 +++ node/deps/v8/src/builtins/builtins-typed-array.cc
