@@ -101,7 +101,7 @@ jobs:
 
       - run: yarn start --node-range node${{ matrix.target-node }} --arch arm64 --output dist
         env:
-          MAKE_JOB_COUNT: 2 # prevent to run out of memory
+          MAKE_JOB_COUNT: 4 # macos-15 has 4 vCPU; v25 timed out at 2
 
       - name: Check if binary is compiled
         id: check_file
