@@ -6,7 +6,7 @@ on:
 
 jobs:
   macos-x64:
-    runs-on: macos-15-intel
+    runs-on: macos-26-intel
 
     strategy:
       fail-fast: false
@@ -58,7 +58,7 @@ jobs:
           path: dist/*
 
   macos-arm64:
-    runs-on: macos-15 # macos-15 is arm64 by default and ships Xcode 16.4 with std::atomic_ref
+    runs-on: macos-26
 
     strategy:
       fail-fast: false
