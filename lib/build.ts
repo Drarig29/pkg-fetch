@@ -29,6 +29,16 @@ function getMajor(nodeVersion: string) {
   return Number(version) | 0;
 }
 
+function isEnvFlagEnabled(name: string, defaultValue: boolean) {
+  const value = process.env[name];
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  return !['0', 'false', 'no', 'off'].includes(value.trim().toLowerCase());
+}
+
 function getConfigureArgs(major: number, targetPlatform: string, targetArch: string): string[] {
   const args: string[] = [];
 
@@ -50,7 +60,7 @@ function getConfigureArgs(major: number, targetPlatform: string, targetArch: str
   }
 
   // Link Time Optimization
-  if (major >= 12) {
+  if (major >= 12 && isEnvFlagEnabled('PKG_ENABLE_LTO', true)) {
     if (hostPlatform !== 'win') {
       args.push('--enable-lto');
     }

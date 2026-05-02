@@ -7,6 +7,11 @@ on:
 jobs:
   macos-x64:
     runs-on: macos-26-intel
+    env:
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPILERCHECK: content
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 2G
 
     strategy:
       fail-fast: false
@@ -15,6 +20,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-macos-x64-node${{ matrix.target-node }}-${{ hashFiles('patches/**', 'lib/build.ts', 'lib/apply-patches.ts', 'package.json', 'yarn.lock') }}
+          restore-keys: |
+            ccache-macos-x64-node${{ matrix.target-node }}-
+            ccache-macos-x64-
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -43,20 +57,35 @@ jobs:
 
       # install GNU make v4 to fix make -j N option https://github.com/nodejs/node/issues/53176#issuecomment-2134740862
       - name: Install build tools
-        run: brew install ninja make
+        run: brew install ccache ninja make
 
-      - name: Put new GNU Make binary first in PATH
-        run: echo "$(brew --prefix)/opt/make/libexec/gnubin" >> "$GITHUB_PATH"
+      - name: Put build tools first in PATH
+        run: |
+          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix)/opt/ccache/libexec" >> "$GITHUB_PATH"
 
-      - name: Check make
+      - name: Check build tools
         run: |
           which make
           make --version
+          which clang
+          clang --version
+          ccache --zero-stats
 
       - run: yarn start --node-range node${{ matrix.target-node }} --arch x64 --output dist
         env:
+          CC: clang
+          CXX: clang++
+          CC_host: clang
+          CXX_host: clang++
           MAKE_JOB_COUNT: 4 # prevent to run out of memory
-          NODE_CONFIGURE_ARGS: --ninja # speed up compilation
+          NODE_CONFIGURE_ARGS: --ninja --without-node-code-cache # speed up compilation
+          PKG_BUILD_PATH: ${{ github.workspace }}/.pkg-build
+          PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes v25 past 6h.
+
+      - name: Show ccache stats
+        if: always()
+        run: ccache --show-stats || true
 
       - name: Check if binary is compiled, skip if download only
         id: check_file
@@ -72,6 +101,11 @@ jobs:
 
   macos-arm64:
     runs-on: macos-26
+    env:
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPILERCHECK: content
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 2G
 
     strategy:
       fail-fast: false
@@ -80,6 +114,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-macos-arm64-node${{ matrix.target-node }}-${{ hashFiles('patches/**', 'lib/build.ts', 'lib/apply-patches.ts', 'package.json', 'yarn.lock') }}
+          restore-keys: |
+            ccache-macos-arm64-node${{ matrix.target-node }}-
+            ccache-macos-arm64-
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -102,15 +145,20 @@ jobs:
       # add missing distutils package to python 3.12
       # install GNU make v4 to fix make -j N option https://github.com/nodejs/node/issues/53176#issuecomment-2134740862
       - name: Install distutils
-        run: brew install python-setuptools ninja make
+        run: brew install python-setuptools ccache ninja make
 
-      - name: Put new GNU Make binary first in PATH
-        run: echo "$(brew --prefix)/opt/make/libexec/gnubin" >> "$GITHUB_PATH"
+      - name: Put build tools first in PATH
+        run: |
+          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix)/opt/ccache/libexec" >> "$GITHUB_PATH"
 
-      - name: Check make
+      - name: Check build tools
         run: |
           which make
           make --version
+          which clang
+          clang --version
+          ccache --zero-stats
 
       # Remove unneeded stuff to free up build space (from Node https://github.com/nodejs/build/issues/3878)
       - name: Cleanup before build
@@ -123,8 +171,18 @@ jobs:
 
       - run: yarn start --node-range node${{ matrix.target-node }} --arch arm64 --output dist
         env:
+          CC: clang
+          CXX: clang++
+          CC_host: clang
+          CXX_host: clang++
           MAKE_JOB_COUNT: 4 # macos-15 has 4 vCPU; v25 timed out at 2
-          NODE_CONFIGURE_ARGS: --ninja # speed up compilation
+          NODE_CONFIGURE_ARGS: --ninja --without-node-code-cache # speed up compilation
+          PKG_BUILD_PATH: ${{ github.workspace }}/.pkg-build
+          PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes v25 past 6h.
+
+      - name: Show ccache stats
+        if: always()
+        run: ccache --show-stats || true
 
       - name: Check if binary is compiled
         id: check_file

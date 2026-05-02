@@ -14,4 +14,5 @@ yarn-error.log
 *.tsbuildinfo
 
 /dist/
-
+/.ccache/
+/.pkg-build/
