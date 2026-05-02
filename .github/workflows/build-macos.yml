@@ -57,7 +57,7 @@ jobs:
 
       # install GNU make v4 to fix make -j N option https://github.com/nodejs/node/issues/53176#issuecomment-2134740862
       - name: Install build tools
-        run: brew install ccache ninja make
+        run: brew install ccache make
 
       - name: Put build tools first in PATH
         run: |
@@ -79,7 +79,7 @@ jobs:
           CC_host: clang
           CXX_host: clang++
           MAKE_JOB_COUNT: 4 # prevent to run out of memory
-          NODE_CONFIGURE_ARGS: --ninja --without-node-code-cache # speed up compilation
+          NODE_CONFIGURE_ARGS: --without-node-code-cache # speed up compilation
           PKG_BUILD_PATH: ${{ github.workspace }}/.pkg-build
           PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes v25 past 6h.
 
@@ -145,7 +145,7 @@ jobs:
       # add missing distutils package to python 3.12
       # install GNU make v4 to fix make -j N option https://github.com/nodejs/node/issues/53176#issuecomment-2134740862
       - name: Install distutils
-        run: brew install python-setuptools ccache ninja make
+        run: brew install python-setuptools ccache make
 
       - name: Put build tools first in PATH
         run: |
@@ -176,7 +176,7 @@ jobs:
           CC_host: clang
           CXX_host: clang++
           MAKE_JOB_COUNT: 4 # macos-15 has 4 vCPU; v25 timed out at 2
-          NODE_CONFIGURE_ARGS: --ninja --without-node-code-cache # speed up compilation
+          NODE_CONFIGURE_ARGS: --without-node-code-cache # speed up compilation
           PKG_BUILD_PATH: ${{ github.workspace }}/.pkg-build
           PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes v25 past 6h.
 
