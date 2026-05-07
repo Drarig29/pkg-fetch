@@ -5,7 +5,7 @@ on:
     inputs:
       args:
         description: 'Command arguments'
-        default: '--node-range node18'
+        default: '--node-range node26'
         type: string
         required: true
 jobs:
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false # prevent test to stop if one fails
       matrix:
-        node-version: [20] # match patched node versions
+        node-version: [20] # runtime for pkg-fetch scripts
         os: [ubuntu-latest] # Skip macos-latest, windows-latest for now
 
     runs-on: ${{ matrix.os }}
@@ -45,4 +45,3 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./output/*
-

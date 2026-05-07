@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-node: [22, 25]
+        target-node: [22, 26]
 
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
           MAKE_JOB_COUNT: 4 # prevent to run out of memory
           NODE_CONFIGURE_ARGS: --without-node-code-cache # speed up compilation
           PKG_BUILD_PATH: ${{ github.workspace }}/.pkg-build
-          PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes v25 past 6h.
+          PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes newer Node builds past 6h.
 
       - name: Show ccache stats
         if: always()
@@ -110,7 +110,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-node: [22, 25]
+        target-node: [22, 26]
 
     steps:
       - uses: actions/checkout@v4
@@ -175,10 +175,10 @@ jobs:
           CXX: clang++
           CC_host: clang
           CXX_host: clang++
-          MAKE_JOB_COUNT: 4 # macos-15 has 4 vCPU; v25 timed out at 2
+          MAKE_JOB_COUNT: 4 # macos-15 has 4 vCPU; newer Node builds timed out at 2
           NODE_CONFIGURE_ARGS: --without-node-code-cache # speed up compilation
           PKG_BUILD_PATH: ${{ github.workspace }}/.pkg-build
-          PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes v25 past 6h.
+          PKG_ENABLE_LTO: 0 # LTO is expensive on macOS and regularly pushes newer Node builds past 6h.
 
       - name: Show ccache stats
         if: always()
