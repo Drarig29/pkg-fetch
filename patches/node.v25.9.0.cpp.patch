@@ -105,3 +105,207 @@ diff --git node/deps/v8/include/v8-object.h node/deps/v8/include/v8-object.h
                                       internal::kLastEmbedderDataTag}>(
              isolate, obj, offset);
      return reinterpret_cast<void*>(value);
+diff --git node/src/node_sea_bin.cc node/src/node_sea_bin.cc
+--- node/src/node_sea_bin.cc
++++ node/src/node_sea_bin.cc
+@@ -20,7 +20,11 @@
+ #include "util-inl.h"
+ 
+ #include <algorithm>
++#include <cstdint>
++#include <cstring>
++#include <limits>
+ #include <memory>
+ #include <string>
+ #include <string_view>
++#include <utility>
+ #include <vector>
+@@ -28,6 +32,7 @@
+ // Split them into two for use later to avoid conflicting with postject.
+ #define SEA_SENTINEL_PREFIX "NODE_SEA_FUSE"
+ #define SEA_SENTINEL_TAIL "fce680ab2cc467b6e072b8b5df1996b2"
++#define SEA_TAIL_SENTINEL "NODE_SEA_TAIL_" SEA_SENTINEL_TAIL
+ 
+ // The POSTJECT_SENTINEL_FUSE macro is a string of random characters selected by
+ // the Node.js project that is present only once in the entire binary. It is
+@@ -41,11 +45,135 @@
+ namespace node {
+ namespace sea {
+ 
++namespace {
++
++constexpr size_t kSeaTailSizeLength = 8;
++constexpr size_t kSeaTailSentinelLength = sizeof(SEA_TAIL_SENTINEL) - 1;
++constexpr size_t kSeaTailTrailerLength =
++    kSeaTailSizeLength + kSeaTailSentinelLength;
++
++uint64_t ReadUint64LE(const char* data) {
++  uint64_t value = 0;
++  for (size_t i = 0; i < kSeaTailSizeLength; ++i) {
++    value |= static_cast<uint64_t>(static_cast<unsigned char>(data[i]))
++             << (8 * i);
++  }
++  return value;
++}
++
++void AppendUint64LE(std::vector<uint8_t>* data, uint64_t value) {
++  for (size_t i = 0; i < kSeaTailSizeLength; ++i) {
++    data->push_back(static_cast<uint8_t>((value >> (8 * i)) & 0xff));
++  }
++}
++
++std::string GetCurrentExecutablePath() {
++  for (size_t size = 1024; size <= 32768; size *= 2) {
++    std::vector<char> buffer(size);
++    size_t len = buffer.size();
++    int r = uv_exepath(buffer.data(), &len);
++    if (r == 0) {
++      return std::string(buffer.data(), len);
++    }
++    if (r != UV_ENOBUFS) {
++      return {};
++    }
++  }
++  return {};
++}
++
++std::vector<char> ReadFileRegion(const std::string& path,
++                                 int64_t offset,
++                                 size_t size) {
++  uv_fs_t req;
++  int r = uv_fs_open(nullptr, &req, path.c_str(), O_RDONLY, 0, nullptr);
++  uv_fs_req_cleanup(&req);
++  if (r < 0) {
++    return {};
++  }
++
++  uv_file file = static_cast<uv_file>(r);
++  std::vector<char> data(size);
++  uv_buf_t buf = uv_buf_init(data.data(), data.size());
++  r = uv_fs_read(nullptr, &req, file, &buf, 1, offset, nullptr);
++  uv_fs_req_cleanup(&req);
++
++  uv_fs_close(nullptr, &req, file, nullptr);
++  uv_fs_req_cleanup(&req);
++
++  if (r < 0 || static_cast<size_t>(r) != size) {
++    return {};
++  }
++
++  return data;
++}
++
++std::vector<char> ReadSingleExecutableBlobFromTail() {
++  std::string path = GetCurrentExecutablePath();
++  if (path.empty()) {
++    return {};
++  }
++
++  uv_fs_t req;
++  int r = uv_fs_stat(nullptr, &req, path.c_str(), nullptr);
++  if (r != 0) {
++    uv_fs_req_cleanup(&req);
++    return {};
++  }
++
++  int64_t file_size = req.statbuf.st_size;
++  uv_fs_req_cleanup(&req);
++  if (file_size < static_cast<int64_t>(kSeaTailTrailerLength)) {
++    return {};
++  }
++
++  int64_t trailer_offset = file_size - kSeaTailTrailerLength;
++  std::vector<char> trailer =
++      ReadFileRegion(path, trailer_offset, kSeaTailTrailerLength);
++  if (trailer.empty()) {
++    return {};
++  }
++
++  if (std::memcmp(trailer.data() + kSeaTailSizeLength,
++                  SEA_TAIL_SENTINEL,
++                  kSeaTailSentinelLength) != 0) {
++    return {};
++  }
++
++  uint64_t blob_size = ReadUint64LE(trailer.data());
++  if (blob_size >
++      static_cast<uint64_t>(file_size - kSeaTailTrailerLength)) {
++    return {};
++  }
++  if (blob_size >
++      static_cast<uint64_t>(std::numeric_limits<size_t>::max())) {
++    return {};
++  }
++
++  int64_t blob_offset =
++      trailer_offset - static_cast<int64_t>(blob_size);
++  return ReadFileRegion(path, blob_offset, static_cast<size_t>(blob_size));
++}
++
++std::string_view FindSingleExecutableBlobFromTail() {
++  static const std::vector<char> result = ReadSingleExecutableBlobFromTail();
++  if (result.empty()) {
++    return {};
++  }
++  return {result.data(), result.size()};
++}
++
++}  // namespace
++
+ // TODO(joyeecheung): use LIEF to locate it directly.
+ std::string_view FindSingleExecutableBlob() {
+ #if !defined(DISABLE_SINGLE_EXECUTABLE_APPLICATION)
+   CHECK(IsSingleExecutable());
+   static const std::string_view result = []() -> std::string_view {
++    if (!postject_has_resource()) {
++      return FindSingleExecutableBlobFromTail();
++    }
++
+     size_t size;
+ #ifdef __APPLE__
+     postject_options options;
+@@ -70,7 +198,7 @@ std::string_view FindSingleExecutableBlob() {
+ }
+ 
+ bool IsSingleExecutable() {
+-  return postject_has_resource();
++  return postject_has_resource() || !FindSingleExecutableBlobFromTail().empty();
+ }
+ 
+ #ifdef HAVE_LIEF
+@@ -421,26 +549,15 @@ ExitCode BuildSingleExecutable(const std::string& sea_config_path,
+   if (code != ExitCode::kNoFailure) {
+     return code;
+   }
+-  // TODO(joyeecheung): refactor serializer implementation and avoid copying
+-  std::vector<uint8_t> sea_blob_u8(sea_blob.begin(), sea_blob.end());
+-  // For backward compatibility with postject, we construct the sentinel fuse
+-  // at runtime instead using a constant.
+-  std::string fuse = std::string(SEA_SENTINEL_PREFIX) + "_" + SEA_SENTINEL_TAIL;
+-  InjectOutput out = InjectResource(
+-      exe_data, kSEAResourceName, sea_blob_u8, kMachoSegmentName);
+-  if (out.result == InjectResult::kSuccess) {
+-    MarkSentinel(&out, fuse);
+-  }
+-
+-  if (out.result != InjectResult::kSuccess) {
+-    if (!out.error_message.empty()) {
+-      FPrintF(stderr, "Error: %s\n", out.error_message);
+-    }
+-    return ExitCode::kGenericUserError;
+-  }
+-
+-  uv_buf_t buf = uv_buf_init(reinterpret_cast<char*>(out.data.data()),
+-                             static_cast<size_t>(out.data.size()));
++  std::vector<uint8_t> out_data = std::move(exe_data);
++  out_data.insert(out_data.end(), sea_blob.begin(), sea_blob.end());
++  AppendUint64LE(&out_data, sea_blob.size());
++  out_data.insert(out_data.end(),
++                  SEA_TAIL_SENTINEL,
++                  SEA_TAIL_SENTINEL + kSeaTailSentinelLength);
++
++  uv_buf_t buf = uv_buf_init(reinterpret_cast<char*>(out_data.data()),
++                             static_cast<size_t>(out_data.size()));
+   r = WriteFileSync(config.output_path.c_str(), buf);
+   if (r != 0) {
+     FPrintF(stderr,
