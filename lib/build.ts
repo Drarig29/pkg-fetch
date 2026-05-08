@@ -49,9 +49,10 @@ function getConfigureArgs(major: number, targetPlatform: string, targetArch: str
     args.push('--fully-static');
   }
 
-  // Link Time Optimization
+  // Link Time Optimization (LTO). Keep it off on macOS because the link step is
+  // too expensive for GitHub-hosted runners.
   if (major >= 12) {
-    if (hostPlatform !== 'win') {
+    if (hostPlatform !== 'win' && targetPlatform !== 'macos') {
       args.push('--enable-lto');
     }
   }
@@ -68,10 +69,8 @@ function getConfigureArgs(major: number, targetPlatform: string, targetArch: str
   // bundled npm package manager
   args.push('--without-npm');
 
-  // Small ICU
-  if (hostPlatform !== 'win' || major < 24) {
-    args.push('--with-intl=small-icu');
-  }
+  // No ICU
+  args.push('--with-intl=none');
 
   // Workaround for nodejs/node#39313
   // All supported macOS versions have zlib as a system library
@@ -213,13 +212,6 @@ async function compileOnWindows(
     args.push('ltcg');
   }
 
-  // Node24 builds on Windows crash with small-icu at icudat codegen
-  // workaround for now is to enable full-icu
-  // TODO check with newer node/tooling/gh-image versions
-  if (major >= 24) {
-    args.push('full-icu');
-  }
-
   await spawn('cmd', args, {
     cwd: nodePath,
     env: { ...process.env, config_flags: config_flags.join(' ') },
@@ -269,6 +261,13 @@ async function compileOnUnix(
     process.env.CFLAGS = `${CFLAGS} -arch x86_64`;
     process.env.CXXFLAGS = `${CXXFLAGS} -arch x86_64`;
     process.env.LDFLAGS = `${LDFLAGS} -arch x86_64`;
+  }
+
+  // Newer V8 builds can dynamically link libatomic.so.1, which is absent on
+  // Debian/Ubuntu by default (nodejs/node#60790). Statically link it instead.
+  if (targetPlatform === 'linux' && getMajor(nodeVersion) >= 26) {
+    const { LDFLAGS = '' } = process.env;
+    process.env.LDFLAGS = `${LDFLAGS} -Wl,-Bstatic,-latomic,-Bdynamic`;
   }
 
   if (hostArch !== targetArch) {
