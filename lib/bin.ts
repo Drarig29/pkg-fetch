@@ -22,6 +22,7 @@ async function main() {
     .option('force-build', {
       alias: 'b',
       type: 'boolean',
+      default: true, // Force build by default
     })
     .conflicts('force-fetch', 'force-build')
     .option('output', { alias: 'o', type: 'string' })
